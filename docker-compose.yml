@@ -1,0 +1,62 @@
+version: '3.5'
+networks:
+  jmeter_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+services:
+  slave:
+    container_name: jm_slave
+    image: saskarad/slave:5.3
+    networks:
+      jmeter_net:
+        ipv4_address: 172.22.0.2
+  slave_2:
+    container_name: jm_slave_2
+    image: saskarad/slave:5.3
+    networks:
+      jmeter_net:
+        ipv4_address: 172.22.0.3
+  slave_3:
+    container_name: jm_slave_3
+    image: saskarad/slave:5.3
+    networks:
+      jmeter_net:
+        ipv4_address: 172.22.0.4
+  slave_4:
+    container_name: jm_slave_4
+    image: saskarad/slave:5.3
+    networks:
+      jmeter_net:
+        ipv4_address: 172.22.0.5
+  master:
+    container_name: jm_master
+    image: saskarad/master:5.3
+    volumes:
+      - jmeter_volume:/opt/apache-jmeter-5.3/coba
+    healthcheck:
+      test: ['CMD', 'ping', 'slave']
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - slave
+      - slave_2
+      - slave_3
+      - slave_4
+    networks:
+      jmeter_net:
+        ipv4_address: 172.22.0.1
+    command: jmeter -n -t /opt/apache-jmeter-5.3/coba/test.jmx -l /opt/apache-jmeter-5.3/coba/dash.jtl -e -o /opt/apache-jmeter-5.3/coba/dashboard -R slave,slave_2,slave_3,slave_4
+volumes:
+  jmeter_volume:
+    external: true
+# docker volume create --name jmeter_volume --opt type=none --opt device=/Users/saskara/Desktop/Jengjet --opt o=bind
+# get ip address docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_id>
+# docker network inspect -f \ '{{range .IPAM.Config}}{{.Subnet}}{{end}}'  <network_id>
+
+# command: echo --TEST
+# command: jmeter -n -t /opt/apache-jmeter-5.3/coba/test.jmx -l /opt/apache-jmeter-5.3/coba/four.csv -R 172.22.0.2,172.22.0.3,172.22.0.4,172.22.0.5
+
+# 90th pct, throughput, err %
